@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>বিজয় লেখক</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600&family=Noto+Serif+Bengali:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bar:#2b579a;--bar-ink:#fff;--rib:#f3f3f3;--rib-line:#d4d4d4;--canvas:#e6e6e6;--btn-h:#dbe5f3;--btn-on:#c5d6ee;--ink:#222;--muted:#666;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bar:#1d3a68;--rib:#2b2b2b;--rib-line:#444;--canvas:#1a1a1a;--btn-h:#3a4658;--btn-on:#4a5d7c;--ink:#eee;--muted:#aaa}}
+:root[data-theme="dark"]{--bar:#1d3a68;--rib:#2b2b2b;--rib-line:#444;--canvas:#1a1a1a;--btn-h:#3a4658;--btn-on:#4a5d7c;--ink:#eee;--muted:#aaa}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--canvas);color:var(--ink);font-family:'Noto Sans Bengali','Nirmala UI',sans-serif;font-size:14px}
+.title{background:var(--bar);color:var(--bar-ink);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.title b{font-weight:600}
+#mode{border:0;border-radius:4px;padding:5px 12px;font:inherit;font-weight:600;cursor:pointer;background:#fff;color:#1d3a68}
+#mode.off{background:#c0392b;color:#fff}
+.rib{background:var(--rib);border-bottom:1px solid var(--rib-line);padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.grp{display:flex;gap:2px;align-items:center;padding-right:8px;margin-right:2px;border-right:1px solid var(--rib-line)}
+.grp:last-child{border:0}
+.rib button,.rib select{font:inherit;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:3px;min-width:32px;height:32px;padding:0 7px;cursor:pointer}
+.rib select{background:var(--rib);border-color:var(--rib-line)}
+.rib button:hover{background:var(--btn-h)}
+.rib button.on{background:var(--btn-on);border-color:var(--bar)}
+.rib button:focus-visible,.rib select:focus-visible,#mode:focus-visible{outline:2px solid var(--bar);outline-offset:1px}
+.desk{flex:1;overflow:auto;padding:20px 12px;-webkit-overflow-scrolling:touch}
+#page{max-width:794px;min-height:1000px;margin:0 auto;background:#fff;color:#111;padding:56px 64px;box-shadow:0 1px 4px rgba(0,0,0,.35);outline:none;font-family:'Noto Serif Bengali','Nirmala UI',serif;font-size:18px;line-height:1.7;word-break:break-word}
+#page:empty::before{content:attr(data-ph);color:#999}
+.status{background:var(--rib);border-top:1px solid var(--rib-line);color:var(--muted);padding:5px 14px;font-size:12.5px;display:flex;justify-content:space-between;gap:10px}
+@media (max-width:640px){#page{padding:28px 20px;min-height:700px}.desk{padding:10px 0}}
+</style>
+</head>
+<body>
+<div class="title"><b>বিজয় লেখক</b><button id="mode" title="বাংলা / English (Ctrl+Alt+B)">বাংলা চালু</button></div>
+<div class="rib" role="toolbar" aria-label="ফরম্যাটিং">
+ <div class="grp"><button data-c="undo" title="Undo">↶</button><button data-c="redo" title="Redo">↷</button></div>
+ <div class="grp">
+  <select id="font" title="ফন্ট"><option value="'Noto Serif Bengali','Nirmala UI',serif">Noto Serif</option><option value="'Noto Sans Bengali','Nirmala UI',sans-serif">Noto Sans</option><option value="SolaimanLipi,Kalpurush,sans-serif">SolaimanLipi</option></select>
+  <select id="size" title="আকার"><option>14</option><option>16</option><option selected>18</option><option>20</option><option>24</option><option>28</option><option>36</option></select>
+ </div>
+ <div class="grp"><button data-c="bold" title="Bold"><b>B</b></button><button data-c="italic" title="Italic"><i>I</i></button><button data-c="underline" title="Underline"><u>U</u></button></div>
+ <div class="grp"><button data-c="justifyLeft" title="বামে">⇤</button><button data-c="justifyCenter" title="মাঝে">↔</button><button data-c="justifyRight" title="ডানে">⇥</button><button data-c="justifyFull" title="দুই পাশে">☰</button></div>
+ <div class="grp"><button data-c="insertUnorderedList" title="বুলেট">• ≡</button><button data-c="insertOrderedList" title="নম্বর">১. ≡</button></div>
+ <div class="grp"><button id="copy" title="সব কপি">কপি</button><button id="clear" title="মুছুন">মুছুন</button></div>
+</div>
+<div class="desk"><div id="page" contenteditable="true" spellcheck="false" data-ph="এখানে লিখুন… (Ctrl+Alt+B চাপলে বাংলা/ইংরেজি বদলাবে)"></div></div>
+<div class="status"><span>বিজয় (Unicode)</span><span id="count">০ শব্দ · ০ অক্ষর</span></div>
+
+<script>
+(function(){
+var page=document.getElementById('page'),modeBtn=document.getElementById('mode'),on=true;
+var M={q:'ঙ',Q:'ং',w:'য',W:'য়',e:'ড',E:'ঢ',r:'প',R:'ফ',t:'ট',T:'ঠ',y:'চ',Y:'ছ',u:'জ',U:'ঝ',i:'হ',I:'ঞ',o:'গ',O:'ঘ',p:'ড়',P:'ঢ়',
+a:'ৃ',A:'র্',s:'ু',S:'ূ',d:'ি',D:'ী',f:'া',F:'অ',g:'্',G:'।',h:'ব',H:'ভ',j:'ক',J:'খ',k:'ত',K:'থ',l:'দ',L:'ধ',';':'স',':':'ঃ',
+z:'্র',Z:'্য',x:'ও',X:'ৗ',c:'ে',C:'ৈ',v:'র',V:'ল',b:'ন',B:'ণ',n:'স',N:'ষ',m:'ম',M:'শ','^':'ঁ','`':'ৎ',
+'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
+var PRE={d:1,c:1,C:1};          // ব্যঞ্জনের আগে টাইপ হয় এমন কার
+var CONS='wWeEryYuUiIoOpPtTrRhHjJkKlLvVbBnNmMqQ;'; // ব্যঞ্জন কী
+var pend=null;                   // {v:কার, base:bool, link:bool}
+
+function setMode(v){on=v;pend=null;modeBtn.textContent=v?'বাংলা চালু':'English';modeBtn.classList.toggle('off',!v);}
+modeBtn.onclick=function(){setMode(!on);page.focus();};
+
+function caretText(){var s=getSelection();if(!s.rangeCount||!s.isCollapsed)return null;var n=s.anchorNode;return n&&n.nodeType===3?{n:n,o:s.anchorOffset}:null;}
+function ins(str){document.execCommand('insertText',false,str);}
+// কারের আগে str বসাও (কার কার্সরের ঠিক আগে আছে)
+function beforeVowel(str){
+ var c=caretText(),v=pend.v;
+ if(!c||c.n.nodeValue.substr(c.o-v.length,v.length)!==v){pend=null;return false;}
+ var t=c.n.nodeValue,p=c.o-v.length;
+ c.n.nodeValue=t.slice(0,p)+str+v+t.slice(c.o);
+ var r=document.createRange(),pos=p+str.length+v.length;r.setStart(c.n,pos);r.collapse(true);
+ var s=getSelection();s.removeAllRanges();s.addRange(r);return true;
+}
+function prevChar(){var c=caretText();return c&&c.o>0?c.n.nodeValue[c.o-1]:'';}
+function isCons(k){return CONS.indexOf(k)>-1&&k!==';'||k===';';}
+
+page.addEventListener('keydown',function(e){
+ if(e.ctrlKey&&e.altKey&&(e.key==='b'||e.key==='B')){e.preventDefault();setMode(!on);return;}
+ if(!on||e.ctrlKey||e.metaKey||e.altKey||e.isComposing||e.key.length!==1){if(e.key.length>1&&e.key!=='Shift')pend=null;return;}
+ var k=e.key,m=M[k];
+ if(m===undefined){pend=null;return;}
+ e.preventDefault();
+ var pc=prevChar();
+ // ে + া = ো , ে + ৗ = ৌ
+ if(pc==='ে'&&(k==='f'||k==='X')){var c=caretText();c.n.nodeValue=c.n.nodeValue.slice(0,c.o-1)+(k==='f'?'ো':'ৌ')+c.n.nodeValue.slice(c.o);
+  var r=document.createRange();r.setStart(c.n,c.o);r.collapse(true);var s=getSelection();s.removeAllRanges();s.addRange(r);pend=null;return;}
+ if(PRE[k]){ins(m);pend={v:m,base:false,link:false};return;}
+ if(pend){
+  if(k==='g'||k==='z'||k==='Z'){ if(pend.base&&beforeVowel(m)){pend.link=(k==='g');return;} }
+  else if(isCons(k)&&(!pend.base||pend.link)){ if(beforeVowel(m)){pend.base=true;pend.link=false;return;} }
+  pend=null;
+ }
+ ins(m);
+});
+page.addEventListener('mousedown',function(){pend=null;});
+
+// টুলবার
+document.querySelectorAll('[data-c]').forEach(function(b){
+ b.addEventListener('mousedown',function(e){e.preventDefault();});
+ b.addEventListener('click',function(){page.focus();document.execCommand(b.dataset.c);sync();});
+});
+function sync(){document.querySelectorAll('[data-c]').forEach(function(b){var c=b.dataset.c;
+ if(/bold|italic|underline|justify|insert/.test(c)){try{b.classList.toggle('on',document.queryCommandState(c));}catch(x){}}});}
+document.addEventListener('selectionchange',sync);
+document.getElementById('font').onchange=function(){page.style.fontFamily=this.value;page.focus();};
+document.getElementById('size').onchange=function(){page.style.fontSize=this.value+'px';page.focus();};
+document.getElementById('copy').onclick=function(){var t=page.innerText,b=this;
+ function ok(){b.textContent='কপি হয়েছে';setTimeout(function(){b.textContent='কপি';},1500);}
+ try{navigator.clipboard.writeText(t).then(ok,fb);}catch(x){fb();}
+ function fb(){var r=document.createRange();r.selectNodeContents(page);var s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');ok();}};
+document.getElementById('clear').onclick=function(){if(page.innerText.trim()&&!confirm('সব লেখা মুছে ফেলবেন?'))return;page.innerHTML='';save();page.focus();};
+
+// শব্দ গণনা ও স্বয়ংক্রিয় সংরক্ষণ
+var bn='০১২৩৪৫৬৭৮৯';function toBn(n){return String(n).replace(/\d/g,function(d){return bn[d];});}
+function save(){try{localStorage.setItem('bijoy-doc',page.innerHTML);}catch(x){}}
+page.addEventListener('input',function(){var t=page.innerText.trim();
+ document.getElementById('count').textContent=toBn(t?t.split(/\s+/).length:0)+' শব্দ · '+toBn(t.replace(/\s/g,'').length)+' অক্ষর';save();});
+try{var d=localStorage.getItem('bijoy-doc');if(d){page.innerHTML=d;page.dispatchEvent(new Event('input'));}}catch(x){}
+page.focus();
+})();
+</script>
+</body>
+</html>
